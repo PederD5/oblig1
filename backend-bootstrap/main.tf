@@ -63,3 +63,10 @@ resource "azurerm_role_assignment" "current_user_blob" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_client_config.current.object_id
 }
+
+resource "azurerm_role_assignment" "github_blob" {
+  scope                = azurerm_storage_account.sa.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = var.service_principal_object_id
+  principal_type       = "ServicePrincipal"
+}

@@ -322,13 +322,20 @@ if ($StorageAccount -ne "") {
     $blober = az storage blob list --account-name $StorageAccount `
         --container-name $Container --auth-mode login --query "[].name" -o tsv 2>$null
     $antallBlober = 0
+    $blobNavn = ""
     if ($null -ne $blober) {
-        $antallBlober = @($blober | Where-Object { $_ -match 'tfstate' }).Count
+        $treff = @($blober | Where-Object { $_ -match 'tfstate' })
+        $antallBlober = $treff.Count
+        # Navnene skal med i utskriften. Antallet alene skiller ikke to miljøer
+        # fra to stacks i samme miljø - har du to stacks (K9), er fire filer
+        # det normale. Den kontrollen gjør et menneske, og da trengs navnene.
+        $blobNavn = ($treff -join " ")
+        if ($blobNavn.Length -gt 200) { $blobNavn = $blobNavn.Substring(0, 200) }
     }
     if ($antallBlober -ge 2) {
-        Write-Ok "K6" "Fant $antallBlober state-filer i $Container"
+        Write-Ok "K6" "Fant $antallBlober state-filer i ${Container}: $blobNavn"
     } elseif ($antallBlober -eq 1) {
-        Write-Avvik "K6" "Én key per miljø" "Fant bare én state-fil. To miljøer skal gi to blober"
+        Write-Avvik "K6" "Én key per miljø" "Fant bare én state-fil ($blobNavn) - hvert miljø skal ha sin egen key"
     } else {
         Write-Avvik "K6" "Én key per miljø" `
             "Fant ingen state-filer i $Container på $StorageAccount. Sjekk navn og tilgang"
